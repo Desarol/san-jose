@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Santo Tomas Nuevo - Coastal Development</title>
+
+  <!-- Mapbox GL JS -->
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+
+  <!-- Google model-viewer for 3D -->
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      overflow: hidden;
+    }
+
+    #map {
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* Header overlay */
+    .header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      padding: 20px 30px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .header h1 {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+
+    .header h1 span {
+      color: #38bdf8;
+    }
+
+    .header-subtitle {
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      font-weight: 400;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    /* Sidebar panel */
+    .sidebar {
+      position: absolute;
+      top: 90px;
+      left: 20px;
+      width: 320px;
+      max-height: calc(100vh - 120px);
+      z-index: 10;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(20px);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.15) transparent;
+    }
+
+    .sidebar-header {
+      padding: 20px 20px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .sidebar-header h2 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    .sidebar-header p {
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+      margin-top: 4px;
+    }
+
+    .lot-list {
+      padding: 8px;
+    }
+
+    .lot-card {
+      padding: 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 4px;
+    }
+
+    .lot-card:hover {
+      background: rgba(255,255,255,0.06);
+    }
+
+    .lot-card.active {
+      background: rgba(14, 165, 233, 0.15);
+      border: 1px solid rgba(14, 165, 233, 0.3);
+      margin-bottom: 3px;
+    }
+
+    .lot-color {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+
+    .lot-card-info h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+
+    .lot-card-info .lot-details {
+      font-size: 11px;
+      color: rgba(255,255,255,0.45);
+      margin-top: 3px;
+      line-height: 1.5;
+    }
+
+    .lot-card-info .lot-price {
+      font-size: 13px;
+      font-weight: 600;
+      color: #34d399;
+      margin-top: 5px;
+    }
+
+    .lot-badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 500;
+      flex-shrink: 0;
+      margin-top: 3px;
+    }
+
+    .badge-available {
+      background: rgba(52, 211, 153, 0.15);
+      color: #34d399;
+    }
+
+    .badge-reserved {
+      background: rgba(251, 191, 36, 0.15);
+      color: #fbbf24;
+    }
+
+    .badge-sold {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+    }
+
+    /* Modal overlay */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal {
+      width: 90%;
+      max-width: 900px;
+      max-height: 90vh;
+      background: #0f172a;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.1);
+      overflow: hidden;
+      animation: slideUp 0.35s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 24px 28px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .modal-header h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+
+    .modal-header .modal-location {
+      font-size: 13px;
+      color: rgba(255,255,255,0.4);
+      margin-top: 4px;
+    }
+
+    .modal-close {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .modal-close:hover {
+      background: rgba(255,255,255,0.12);
+    }
+
+    .modal-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .modal-3d {
+      background: #1e293b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 380px;
+      position: relative;
+    }
+
+    .modal-3d model-viewer {
+      width: 100%;
+      height: 100%;
+      min-height: 380px;
+      --poster-color: transparent;
+    }
+
+    .modal-3d-label {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      font-size: 10px;
+      color: rgba(255,255,255,0.35);
+      background: rgba(0,0,0,0.5);
+      padding: 4px 10px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .modal-details {
+      padding: 24px 28px;
+      overflow-y: auto;
+    }
+
+    .modal-details .detail-section {
+      margin-bottom: 20px;
+    }
+
+    .modal-details .detail-section h3 {
+      font-size: 11px;
+      color: rgba(255,255,255,0.35);
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      margin-bottom: 10px;
+      font-weight: 500;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .detail-item {
+      background: rgba(255,255,255,0.04);
+      padding: 12px 14px;
+      border-radius: 10px;
+    }
+
+    .detail-item label {
+      font-size: 10px;
+      color: rgba(255,255,255,0.35);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .detail-item span {
+      font-size: 15px;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    .detail-item span.price {
+      color: #34d399;
+    }
+
+    .modal-gallery {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .modal-gallery img {
+      width: 100%;
+      aspect-ratio: 4/3;
+      object-fit: cover;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .modal-gallery img:hover {
+      transform: scale(1.03);
+    }
+
+    .modal-cta {
+      padding: 20px 28px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-primary {
+      flex: 1;
+      padding: 12px;
+      background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      padding: 12px 20px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      color: #e2e8f0;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    /* Mapbox popup customization */
+    .mapboxgl-popup-content {
+      background: rgba(15, 23, 42, 0.95) !important;
+      backdrop-filter: blur(12px);
+      border-radius: 12px !important;
+      padding: 14px 16px !important;
+      border: 1px solid rgba(255,255,255,0.1) !important;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
+      color: #fff !important;
+      min-width: 200px;
+    }
+
+    .mapboxgl-popup-tip {
+      border-top-color: rgba(15, 23, 42, 0.95) !important;
+    }
+
+    .mapboxgl-popup-close-button {
+      color: rgba(255,255,255,0.5) !important;
+      font-size: 18px !important;
+      right: 8px !important;
+      top: 6px !important;
+    }
+
+    .popup-content h3 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .popup-content .popup-meta {
+      font-size: 11px;
+      color: rgba(255,255,255,0.45);
+      margin-bottom: 10px;
+    }
+
+    .popup-content .popup-price {
+      font-size: 16px;
+      font-weight: 700;
+      color: #34d399;
+      margin-bottom: 10px;
+    }
+
+    .popup-btn {
+      width: 100%;
+      padding: 8px;
+      background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    /* Image overlay markers */
+    .custom-marker {
+      width: 60px;
+      height: 60px;
+      border-radius: 10px;
+      border: 2px solid rgba(255,255,255,0.6);
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    .custom-marker:hover {
+      transform: scale(1.15);
+      border-color: #0ea5e9;
+      box-shadow: 0 6px 30px rgba(14, 165, 233, 0.4);
+    }
+
+    .custom-marker img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Legend */
+    .legend {
+      position: absolute;
+      bottom: 30px;
+      right: 20px;
+      z-index: 10;
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(16px);
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 16px 20px;
+    }
+
+    .legend h4 {
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+      font-weight: 500;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.65);
+    }
+
+    .legend-color {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .modal-body { grid-template-columns: 1fr; }
+      .modal-3d { min-height: 260px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="logo">B</div>
+      <div>
+        <h1>Santo Tomas <span>Nuevo</span></h1>
+        <div class="header-subtitle">Baja California &bull; Coastal Development</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h2>Available Lots</h2>
+      <p>Click a lot on the map or below to view details</p>
+    </div>
+    <div class="lot-list" id="lot-list"></div>
+  </div>
+
+  <!-- Map -->
+  <div id="map"></div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <h4>Lot Status</h4>
+    <div class="legend-item"><div class="legend-color" style="background:#34d399"></div> Available</div>
+    <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div> Reserved</div>
+    <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div> Sold</div>
+    <div class="legend-item"><div class="legend-color" style="background:rgba(14,165,233,0.3);border:1px solid #0ea5e9"></div> Selected</div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <h2 id="modal-title">Lot Name</h2>
+          <div class="modal-location" id="modal-location">Location</div>
+        </div>
+        <button class="modal-close" id="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-3d" id="modal-3d-container">
+          <model-viewer
+            id="model-viewer"
+            src="https://modelviewer.dev/shared-assets/models/Astronaut.glb"
+            alt="3D property visualization"
+            auto-rotate
+            camera-controls
+            touch-action="pan-y"
+            shadow-intensity="1"
+            environment-image="neutral"
+            style="width:100%;height:100%;min-height:380px"
+          ></model-viewer>
+          <div class="modal-3d-label">Interactive 3D View &mdash; Drag to rotate</div>
+        </div>
+        <div class="modal-details">
+          <div class="detail-section">
+            <h3>Property Details</h3>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <label>Lot Size</label>
+                <span id="modal-size">--</span>
+              </div>
+              <div class="detail-item">
+                <label>Price</label>
+                <span class="price" id="modal-price">--</span>
+              </div>
+              <div class="detail-item">
+                <label>Zoning</label>
+                <span id="modal-zoning">--</span>
+              </div>
+              <div class="detail-item">
+                <label>Status</label>
+                <span id="modal-status">--</span>
+              </div>
+            </div>
+          </div>
+          <div class="detail-section">
+            <h3>Description</h3>
+            <p style="font-size:13px;line-height:1.6;color:rgba(255,255,255,0.6)" id="modal-desc">--</p>
+          </div>
+          <div class="detail-section">
+            <h3>Gallery</h3>
+            <div class="modal-gallery" id="modal-gallery"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-cta">
+        <button class="btn-primary">Request More Information</button>
+        <button class="btn-secondary">Download Brochure</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ─────────────────────────────────────────────
+    // CONFIG
+    // ─────────────────────────────────────────────
+    mapboxgl.accessToken = 'pk.eyJ1IjoicmNhcmFjYXVzIiwiYSI6ImNtbGVtc3A3djFjdDIzZXB3bjAzNTlucHoifQ.vB7V2k8ey8XJafjHKhFbiw';
+
+    // *** PASTE YOUR TILESET ID HERE after uploading ***
+    // Find it in Mapbox Studio → Tilesets (e.g. "rcaracaus.abc123xy")
+    const ORTHO_TILESET_ID = 'rcaracaus.63u5wwje';
+
+    // ─────────────────────────────────────────────
+    // ORTHOMOSAIC EXTENT (from santo-tomas-crop.tif)
+    // UL: -116.6036, 31.4885  LR: -116.5960, 31.4821
+    // ─────────────────────────────────────────────
+    const ORTHO_BOUNDS = [-116.6036, 31.4821, -116.5960, 31.4885];
+
+    // ─────────────────────────────────────────────
+    // BILINEAR INTERPOLATION
+    // ─────────────────────────────────────────────
+    function bilerp(corners, u, v) {
+      const [tl, tr, br, bl] = corners;
+      return [
+        (1-u)*(1-v)*tl[0] + u*(1-v)*tr[0] + u*v*br[0] + (1-u)*v*bl[0],
+        (1-u)*(1-v)*tl[1] + u*(1-v)*tr[1] + u*v*br[1] + (1-u)*v*bl[1]
+      ];
+    }
+
+    function generateSublots(zone, cols, rows) {
+      const corners = zone.corners;
+      const gap = 0.07;
+      const sublots = [];
+      const rowLabels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let idx = 0;
+      const seed = zone.id.charCodeAt(0) + zone.id.charCodeAt(zone.id.length - 1);
+      const statusPool = [];
+      for (let i = 0; i < cols * rows; i++) {
+        const hash = (seed * 31 + i * 17) % 100;
+        if (hash < 60) statusPool.push('available');
+        else if (hash < 82) statusPool.push('reserved');
+        else statusPool.push('sold');
+      }
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const u0 = (c + gap) / cols, u1 = (c + 1 - gap) / cols;
+          const v0 = (r + gap) / rows, v1 = (r + 1 - gap) / rows;
+          const tl = bilerp(corners, u0, v0), tr = bilerp(corners, u1, v0);
+          const br = bilerp(corners, u1, v1), bl = bilerp(corners, u0, v1);
+          const center = bilerp(corners, (c + 0.5) / cols, (r + 0.5) / rows);
+          const label = `${rowLabels[r]}${c + 1}`;
+          const basePrice = zone.basePrice;
+          const variation = ((seed * 7 + idx * 13) % 20 - 10) * 1000;
+          sublots.push({
+            id: `${zone.id}-${label}`, zoneId: zone.id, zoneName: zone.name,
+            label, status: statusPool[idx],
+            price: `$${(basePrice + variation).toLocaleString()} USD`,
+            size: `${zone.lotSize} m\u00b2`, center, coords: [tl, tr, br, bl, tl],
+            featureId: null
+          });
+          idx++;
+        }
+      }
+      return sublots;
+    }
+
+    // ─────────────────────────────────────────────
+    // ZONE DEFINITIONS — within the orthomosaic extent
+    // 2 rows x 4 cols grid covering the cropped TIFF area
+    // ─────────────────────────────────────────────
+    const zones = [
+      {
+        id: 'vista-norte',
+        name: 'Vista Norte',
+        zoning: 'Residential',
+        basePrice: 78000,
+        lotSize: 55,
+        description: 'Northwest section with elevated terrain and panoramic views of the surrounding valley. Prime location for homes seeking morning light and mountain backdrops.',
+        model3d: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
+        cameraOrbit: '45deg 65deg 2.5m',
+        corners: [
+          [-116.6030, 31.4880], [-116.6014, 31.4880],
+          [-116.6014, 31.4855], [-116.6030, 31.4855]
+        ],
+        images: [
+          'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&h=200&fit=crop',
+          'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=200&fit=crop',
+          'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=300&h=200&fit=crop'
+        ]
+      },
+      {
+        id: 'loma-verde',
+        name: 'Loma Verde',
+        zoning: 'Residential',
+        basePrice: 72000,
+        lotSize: 50,
+        description: 'Central north section on a gentle green hillside. Building-ready terrain with excellent drainage and road access on two sides. Utilities stubbed to each parcel.',
+        model3d: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
+        cameraOrbit: '135deg 70deg 3m',
+        corners: [
+          [-116.6012, 31.4880], [-116.5996, 31.4880],
+          [-116.5996, 31.4855], [-116.6012, 31.4855]
+        ],
+        images: [
+          'https://images.unsplash.com/photo-1505228395891-9a51e7e86bf6?w=300&h=200&fit=crop',
+          'https://images.unsplash.com/photo-1499793983394-e58fc2bfee46?w=300&h=200&fit=crop',
+          'https://images.unsplash.com/photo-1468413253725-0d5181091126?w=300&h=200&fit=crop'
+        ]
+      },
+      {
+        id: 'cerro-alto',
+        name: 'Cerro Alto',
+        zoning: 'Mixed Use',
+        basePrice: 88000,
+        lotSize: 60,
+        description: 'Elevated northeast section approved for residential and boutique commercial. The highest point in the development with sweeping 270-degree views.',
+        model3d: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
+        cameraOrbit: '225deg 60deg 2m',
+        corners: [
+          [-116.5994, 31.4880], [-116.5978, 31.4880],
+          [-116.5978, 31.4855], [-116.5994, 31.4855]
+        ],
+        images: [
+          'https://images.unsplash.com/photo-1509233725247-49e657c54213?w=300&h=200&fit=crop',
+          'https://images.unsplash.com/photo-1504681869696-d977211a5f4c?w=300&h=200&fit=crop',
+          'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=300&h=200&fit=crop'
+        ]
+      },
+      {
+        id: 'punta-este',
+        name: 'Punta Este',
+        zoning: 'Residential',
+        basePrice: 82000,
+        lotSize: 58,
+        description: 'Eastern section with direct sightlines to the coast. Morning sun exposure and cooling Pacific breezes make this an ideal location year-round.',
+        model3d: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
+        cameraOrbit: '315deg 55deg 3.5m',
+        corners: [
+          [-116.5976, 31.4880], [-116.5963, 31.4880],
+          [-116.5963, 31.4855], [-116.5976, 31.4855]
+        ],
+        images: [
+          'https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=300&h=200&fit=crop',
+          'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=300&h=200&fit=crop',
+          'https://images.unsplash.com/photo-1437719417032-8799fd04b926?w=300&h=200&fit=crop'
+        ]
+      },
+      {
+        id: 'arroyo-sur',
+        name: 'Arroyo Sur',
+        zoning: 'Residential',
+        basePrice: 68000,
+        lotSize: 52,
+        description: 'Southwest section bordered by a seasonal arroyo. Natural desert landscaping with native plants. Quiet, private setting perfect for retreat-style homes.',
+        model3d: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
+        cameraOrbit: '0deg 75deg 2.8m',
+        corners: [
+          [-116.6030, 31.4852], [-116.6014, 31.4852],
+          [-116.6014, 31.4827], [-116.6030, 31.4827]
+        ],
+        images: [
+          'https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=300&h=200&fit=crop',
+          'https://images.unsplash.com/photo-1471922694854-ff1b63b20054?w=300&h=200&fit=crop',
+          'https://images.unsplash.com/photo-1414609245224-afa02bfb3fda?w=300&h=200&fit=crop'
+        ]
+      },
+      {
+        id: 'centro',
+        name: 'Centro',
+        zoning: 'Residential',
+        basePrice: 85000,
+        lotSize: 62,
+        description: 'Heart of the development with the best value per square meter. Level terrain, walking distance to all planned amenities including the community park.',
+        model3d: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
+        cameraOrbit: '90deg 80deg 2m',
+        corners: [
+          [-116.6012, 31.4852], [-116.5996, 31.4852],
+          [-116.5996, 31.4827], [-116.6012, 31.4827]
+        ],
+        images: [
+          'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=300&h=200&fit=crop',
+          'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=300&h=200&fit=crop',
+          'https://images.unsplash.com/photo-1484291150605-0860ed671f04?w=300&h=200&fit=crop'
+        ]
+      },
+      {
+        id: 'valle-medio',
+        name: 'Valle Medio',
+        zoning: 'Commercial',
+        basePrice: 75000,
+        lotSize: 50,
+        description: 'South-central section along the main access road. Zoned for small commercial \u2014 ideal for shops, restaurants, or eco-tourism offices serving the community.',
+        model3d: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
+        cameraOrbit: '180deg 65deg 3m',
+        corners: [
+          [-116.5994, 31.4852], [-116.5978, 31.4852],
+          [-116.5978, 31.4827], [-116.5994, 31.4827]
+        ],
+        images: [
+          'https://images.unsplash.com/photo-1520483601560-389dff434fdf?w=300&h=200&fit=crop',
+          'https://images.unsplash.com/photo-1473186505569-9c61870c11f9?w=300&h=200&fit=crop',
+          'https://images.unsplash.com/photo-1494783367193-149034c05e8f?w=300&h=200&fit=crop'
+        ]
+      },
+      {
+        id: 'rincon-este',
+        name: 'Rinc\u00f3n Este',
+        zoning: 'Residential',
+        basePrice: 70000,
+        lotSize: 55,
+        description: 'Southeast corner with generous lot sizes and open desert views to the south. Unobstructed southern exposure is perfect for solar and sustainable builds.',
+        model3d: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
+        cameraOrbit: '270deg 70deg 2.5m',
+        corners: [
+          [-116.5976, 31.4852], [-116.5963, 31.4852],
+          [-116.5963, 31.4827], [-116.5976, 31.4827]
+        ],
+        images: [
+          'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=300&h=200&fit=crop',
+          'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=300&h=200&fit=crop',
+          'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&h=200&fit=crop'
+        ]
+      }
+    ];
+
+    // ─────────────────────────────────────────────
+    // GENERATE ALL SUB-LOTS (5 cols x 4 rows = 20 per zone)
+    // ─────────────────────────────────────────────
+    const COLS = 5, ROWS = 4;
+    const allSublots = [];
+    let featureIdCounter = 0;
+    zones.forEach(zone => {
+      generateSublots(zone, COLS, ROWS).forEach(s => {
+        s.featureId = featureIdCounter++;
+        allSublots.push(s);
+      });
+    });
+
+    const zoneMap = {};
+    zones.forEach(z => { zoneMap[z.id] = z; });
+
+    // ─────────────────────────────────────────────
+    // Photo markers (around orthomosaic extent)
+    // ─────────────────────────────────────────────
+    const photoMarkers = [
+      { coords: [-116.6042, 31.4888], image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=120&h=120&fit=crop', caption: 'Baja coastline near Santo Tomas' },
+      { coords: [-116.5950, 31.4888], image: 'https://images.unsplash.com/photo-1509233725247-49e657c54213?w=120&h=120&fit=crop', caption: 'Valley overlook' },
+      { coords: [-116.5950, 31.4818], image: 'https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=120&h=120&fit=crop', caption: 'Desert terrain' },
+      { coords: [-116.6042, 31.4818], image: 'https://images.unsplash.com/photo-1471922694854-ff1b63b20054?w=120&h=120&fit=crop', caption: 'Pacific sunset' }
+    ];
+
+    // ─────────────────────────────────────────────
+    // INITIALIZE MAP — centered on orthomosaic
+    // ─────────────────────────────────────────────
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/satellite-streets-v12',
+      center: [-116.5998, 31.4853],
+      zoom: 16.2,
+      pitch: 0,
+      bearing: 0,
+      antialias: true
+    });
+
+    map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+
+    let selectedSublotId = null;
+    let activePopup = null;
+
+    // ─────────────────────────────────────────────
+    // MAP LOAD
+    // ─────────────────────────────────────────────
+    map.on('load', () => {
+      // 3D terrain
+      map.addSource('mapbox-dem', {
+        type: 'raster-dem',
+        url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
+        tileSize: 512, maxzoom: 14
+      });
+      map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+      map.addLayer({
+        id: 'sky', type: 'sky',
+        paint: { 'sky-type': 'atmosphere', 'sky-atmosphere-sun': [0.0, 0.0], 'sky-atmosphere-sun-intensity': 15 }
+      });
+
+      // ── HI-RES ORTHOMOSAIC TILESET OVERLAY ──
+      if (ORTHO_TILESET_ID && !ORTHO_TILESET_ID.includes('REPLACE_ME')) {
+        map.addSource('orthomosaic', {
+          type: 'raster',
+          url: `mapbox://${ORTHO_TILESET_ID}`,
+          tileSize: 256,
+          maxzoom: 22
+        });
+        // Find first symbol layer to insert ortho above satellite but below labels
+        const layers = map.getStyle().layers;
+        let firstSymbol = null;
+        for (const layer of layers) {
+          if (layer.type === 'symbol') { firstSymbol = layer.id; break; }
+        }
+        map.addLayer({
+          id: 'orthomosaic-layer',
+          type: 'raster',
+          source: 'orthomosaic',
+          paint: { 'raster-opacity': 1.0 },
+          maxzoom: 22
+        }, firstSymbol); // above satellite, below labels
+      }
+
+      // ── ORTHOMOSAIC EXTENT OUTLINE ──
+      const extentCoords = [
+        [ORTHO_BOUNDS[0], ORTHO_BOUNDS[3]],
+        [ORTHO_BOUNDS[2], ORTHO_BOUNDS[3]],
+        [ORTHO_BOUNDS[2], ORTHO_BOUNDS[1]],
+        [ORTHO_BOUNDS[0], ORTHO_BOUNDS[1]],
+        [ORTHO_BOUNDS[0], ORTHO_BOUNDS[3]]
+      ];
+      map.addSource('ortho-extent', {
+        type: 'geojson',
+        data: { type: 'Feature', geometry: { type: 'Polygon', coordinates: [extentCoords] } }
+      });
+      map.addLayer({
+        id: 'ortho-extent-outline', type: 'line', source: 'ortho-extent',
+        paint: { 'line-color': '#0ea5e9', 'line-width': 2, 'line-dasharray': [4, 3], 'line-opacity': 0.6 }
+      });
+
+      // ── ZONE OUTLINES ──
+      const zoneFeatures = zones.map(z => ({
+        type: 'Feature',
+        properties: { id: z.id, name: z.name },
+        geometry: { type: 'Polygon', coordinates: [[...z.corners, z.corners[0]]] }
+      }));
+      map.addSource('zones', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: zoneFeatures }
+      });
+      map.addLayer({
+        id: 'zones-outline', type: 'line', source: 'zones',
+        paint: { 'line-color': 'rgba(255,255,255,0.55)', 'line-width': 1.5, 'line-dasharray': [4, 3] }
+      });
+
+      // ── ZONE LABELS ──
+      const zoneLabelFeatures = zones.map(z => {
+        const c = z.corners;
+        return {
+          type: 'Feature',
+          properties: { name: z.name },
+          geometry: { type: 'Point', coordinates: [(c[0][0]+c[1][0]+c[2][0]+c[3][0])/4, (c[0][1]+c[1][1]+c[2][1]+c[3][1])/4] }
+        };
+      });
+      map.addSource('zone-labels', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: zoneLabelFeatures }
+      });
+      map.addLayer({
+        id: 'zone-labels-text', type: 'symbol', source: 'zone-labels',
+        layout: {
+          'text-field': ['get', 'name'], 'text-size': 14,
+          'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
+          'text-anchor': 'center', 'text-allow-overlap': true,
+          'text-transform': 'uppercase', 'text-letter-spacing': 0.08
+        },
+        paint: { 'text-color': '#ffffff', 'text-halo-color': 'rgba(0,0,0,0.85)', 'text-halo-width': 2 }
+      });
+
+      // ── SUB-LOT POLYGONS ──
+      const sublotFeatures = allSublots.map(s => ({
+        type: 'Feature', id: s.featureId,
+        properties: { id: s.id, zoneId: s.zoneId, zoneName: s.zoneName, label: s.label, status: s.status, price: s.price, size: s.size },
+        geometry: { type: 'Polygon', coordinates: [s.coords] }
+      }));
+      map.addSource('sublots', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: sublotFeatures }
+      });
+      map.addLayer({
+        id: 'sublots-fill', type: 'fill', source: 'sublots',
+        paint: {
+          'fill-color': ['match', ['get', 'status'], 'available', 'rgba(52,211,153,0.3)', 'reserved', 'rgba(251,191,36,0.3)', 'sold', 'rgba(239,68,68,0.25)', 'rgba(52,211,153,0.3)'],
+          'fill-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 0.8, 0.5]
+        }
+      });
+      map.addLayer({
+        id: 'sublots-outline', type: 'line', source: 'sublots',
+        paint: {
+          'line-color': ['case', ['boolean', ['feature-state', 'selected'], false], '#0ea5e9',
+            ['match', ['get', 'status'], 'available', '#34d399', 'reserved', '#fbbf24', 'sold', '#ef4444', '#34d399']],
+          'line-width': ['case', ['boolean', ['feature-state', 'selected'], false], 3.5, ['boolean', ['feature-state', 'hover'], false], 2.5, 1.5],
+          'line-opacity': 0.9
+        }
+      });
+
+      // Lot labels at high zoom
+      map.addSource('sublot-labels', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: allSublots.map(s => ({
+          type: 'Feature', properties: { label: s.label },
+          geometry: { type: 'Point', coordinates: s.center }
+        }))}
+      });
+      map.addLayer({
+        id: 'sublot-labels-text', type: 'symbol', source: 'sublot-labels',
+        minzoom: 18,
+        layout: { 'text-field': ['get', 'label'], 'text-size': 10, 'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'], 'text-anchor': 'center', 'text-allow-overlap': true },
+        paint: { 'text-color': '#ffffff', 'text-halo-color': 'rgba(0,0,0,0.7)', 'text-halo-width': 1.2 }
+      });
+
+      // ── HOVER ──
+      let hoveredId = null;
+      map.on('mousemove', 'sublots-fill', (e) => {
+        if (e.features.length > 0) {
+          if (hoveredId !== null) map.setFeatureState({ source: 'sublots', id: hoveredId }, { hover: false });
+          hoveredId = e.features[0].id;
+          map.setFeatureState({ source: 'sublots', id: hoveredId }, { hover: true });
+          map.getCanvas().style.cursor = 'pointer';
+        }
+      });
+      map.on('mouseleave', 'sublots-fill', () => {
+        if (hoveredId !== null) { map.setFeatureState({ source: 'sublots', id: hoveredId }, { hover: false }); hoveredId = null; }
+        map.getCanvas().style.cursor = '';
+      });
+      map.on('click', 'sublots-fill', (e) => {
+        if (e.features.length > 0) selectSublot(e.features[0].properties.id, e.features[0].id);
+      });
+
+      // Photo markers
+      photoMarkers.forEach(pm => {
+        const el = document.createElement('div');
+        el.className = 'custom-marker';
+        el.innerHTML = `<img src="${pm.image}" alt="${pm.caption}">`;
+        el.title = pm.caption;
+        new mapboxgl.Marker(el).setLngLat(pm.coords).addTo(map);
+      });
+
+      buildSidebar();
+    });
+
+    // ─────────────────────────────────────────────
+    // SELECT SUB-LOT
+    // ─────────────────────────────────────────────
+    function selectSublot(sublotId, featureId) {
+      const sublot = allSublots.find(s => s.id === sublotId);
+      if (!sublot) return;
+      if (selectedSublotId !== null) {
+        const prev = allSublots.find(s => s.id === selectedSublotId);
+        if (prev) map.setFeatureState({ source: 'sublots', id: prev.featureId }, { selected: false });
+      }
+      if (activePopup) { activePopup.remove(); activePopup = null; }
+      selectedSublotId = sublotId;
+      map.setFeatureState({ source: 'sublots', id: featureId || sublot.featureId }, { selected: true });
+      document.querySelectorAll('.lot-card').forEach(c => c.classList.remove('active'));
+      document.querySelector(`.lot-card[data-id="${sublot.zoneId}"]`)?.classList.add('active');
+      map.flyTo({ center: sublot.center, zoom: 19, pitch: 0, bearing: 0, duration: 1200, essential: true });
+      const zone = zoneMap[sublot.zoneId];
+      const statusColor = sublot.status === 'available' ? '#34d399' : sublot.status === 'reserved' ? '#fbbf24' : '#ef4444';
+      activePopup = new mapboxgl.Popup({ offset: 15, closeOnClick: true })
+        .setLngLat(sublot.center)
+        .setHTML(`<div class="popup-content"><h3>${zone.name} &mdash; Lot ${sublot.label}</h3><div class="popup-meta">${sublot.size} &bull; ${zone.zoning} &bull; <span style="color:${statusColor};font-weight:600">${sublot.status.toUpperCase()}</span></div><div class="popup-price">${sublot.price}</div><button class="popup-btn" onclick="openModal('${sublot.id}')">View 3D &amp; Details</button></div>`)
+        .addTo(map);
+    }
+
+    function flyToZone(zoneId) {
+      const zone = zoneMap[zoneId];
+      if (!zone) return;
+      const c = zone.corners;
+      document.querySelectorAll('.lot-card').forEach(el => el.classList.remove('active'));
+      document.querySelector(`.lot-card[data-id="${zoneId}"]`)?.classList.add('active');
+      map.flyTo({ center: [(c[0][0]+c[1][0]+c[2][0]+c[3][0])/4, (c[0][1]+c[1][1]+c[2][1]+c[3][1])/4], zoom: 18.2, pitch: 0, bearing: 0, duration: 1400, essential: true });
+    }
+
+    // ─────────────────────────────────────────────
+    // SIDEBAR
+    // ─────────────────────────────────────────────
+    function buildSidebar() {
+      const container = document.getElementById('lot-list');
+      container.innerHTML = '';
+      zones.forEach(zone => {
+        const zoneLots = allSublots.filter(s => s.zoneId === zone.id);
+        const avail = zoneLots.filter(s => s.status === 'available').length;
+        const resv = zoneLots.filter(s => s.status === 'reserved').length;
+        const sold = zoneLots.filter(s => s.status === 'sold').length;
+        const total = zoneLots.length;
+        const card = document.createElement('div');
+        card.className = 'lot-card'; card.dataset.id = zone.id;
+        card.innerHTML = `<div class="lot-card-info" style="flex:1"><h3>${zone.name}</h3><div class="lot-details">${zone.zoning} &bull; ${total} lots &bull; ${zone.lotSize} m\u00b2 each</div><div class="lot-price">From $${(zone.basePrice - 10000).toLocaleString()} USD</div><div style="display:flex;gap:4px;margin-top:6px;height:4px;border-radius:2px;overflow:hidden"><div style="width:${(avail/total*100).toFixed(0)}%;background:#34d399;border-radius:2px"></div><div style="width:${(resv/total*100).toFixed(0)}%;background:#fbbf24;border-radius:2px"></div><div style="width:${(sold/total*100).toFixed(0)}%;background:#ef4444;border-radius:2px"></div></div><div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:4px">${avail} avail &bull; ${resv} resv &bull; ${sold} sold</div></div>`;
+        card.addEventListener('click', () => flyToZone(zone.id));
+        container.appendChild(card);
+      });
+    }
+
+    // ─────────────────────────────────────────────
+    // MODAL
+    // ─────────────────────────────────────────────
+    function openModal(sublotId) {
+      const sublot = allSublots.find(s => s.id === sublotId);
+      if (!sublot) return;
+      const zone = zoneMap[sublot.zoneId];
+      if (!zone) return;
+      document.getElementById('modal-title').textContent = `${zone.name} \u2014 Lot ${sublot.label}`;
+      document.getElementById('modal-location').textContent = `Santo Tomas Nuevo, B.C. \u2022 ${zone.name}`;
+      document.getElementById('modal-size').textContent = sublot.size;
+      document.getElementById('modal-price').textContent = sublot.price;
+      document.getElementById('modal-zoning').textContent = zone.zoning;
+      document.getElementById('modal-status').textContent = sublot.status.charAt(0).toUpperCase() + sublot.status.slice(1);
+      document.getElementById('modal-desc').textContent = zone.description;
+      const mv = document.getElementById('model-viewer');
+      mv.setAttribute('src', zone.model3d);
+      mv.setAttribute('camera-orbit', zone.cameraOrbit);
+      const gallery = document.getElementById('modal-gallery');
+      gallery.innerHTML = '';
+      zone.images.forEach(img => { const el = document.createElement('img'); el.src = img; el.alt = zone.name; gallery.appendChild(el); });
+      document.getElementById('modal-overlay').classList.add('active');
+    }
+
+    function closeModal() { document.getElementById('modal-overlay').classList.remove('active'); }
+    document.getElementById('modal-close').addEventListener('click', closeModal);
+    document.getElementById('modal-overlay').addEventListener('click', (e) => { if (e.target === document.getElementById('modal-overlay')) closeModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+  </script>
+</body>
+</html>
