@@ -843,22 +843,23 @@
     }
 
     // ─────────────────────────────────────────────
-    // ZONE DEFINITIONS — within the orthomosaic extent
-    // 2 rows x 4 cols grid covering the cropped TIFF area
+    // ZONE DEFINITIONS — terrain-following irregular quads
+    // derived from visible roads, arroyo, and ridge
+    // in the orthomosaic imagery
     // ─────────────────────────────────────────────
     const zones = [
       {
-        id: 'vista-norte',
-        name: 'Vista Norte',
+        id: 'loma-poniente',
+        name: 'Loma Poniente',
         zoning: 'Residential',
         basePrice: 78000,
         lotSize: 55,
-        description: 'Northwest section with elevated terrain and panoramic views of the surrounding valley. Prime location for homes seeking morning light and mountain backdrops.',
+        description: 'Elevated western parcel above the main dirt road. Gentle slope with panoramic views of the valley and surrounding hills. The road curves along the southern edge providing direct access.',
         model3d: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
         cameraOrbit: '45deg 65deg 2.5m',
         corners: [
-          [-116.6030, 31.4880], [-116.6014, 31.4880],
-          [-116.6014, 31.4855], [-116.6030, 31.4855]
+          [-116.6033, 31.4882], [-116.6005, 31.4880],
+          [-116.6018, 31.4856], [-116.6033, 31.4858]
         ],
         images: [
           'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&h=200&fit=crop',
@@ -867,74 +868,17 @@
         ]
       },
       {
-        id: 'loma-verde',
-        name: 'Loma Verde',
-        zoning: 'Residential',
-        basePrice: 72000,
-        lotSize: 50,
-        description: 'Central north section on a gentle green hillside. Building-ready terrain with excellent drainage and road access on two sides. Utilities stubbed to each parcel.',
-        model3d: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
-        cameraOrbit: '135deg 70deg 3m',
-        corners: [
-          [-116.6012, 31.4880], [-116.5996, 31.4880],
-          [-116.5996, 31.4855], [-116.6012, 31.4855]
-        ],
-        images: [
-          'https://images.unsplash.com/photo-1505228395891-9a51e7e86bf6?w=300&h=200&fit=crop',
-          'https://images.unsplash.com/photo-1499793983394-e58fc2bfee46?w=300&h=200&fit=crop',
-          'https://images.unsplash.com/photo-1468413253725-0d5181091126?w=300&h=200&fit=crop'
-        ]
-      },
-      {
-        id: 'cerro-alto',
-        name: 'Cerro Alto',
-        zoning: 'Mixed Use',
-        basePrice: 88000,
-        lotSize: 60,
-        description: 'Elevated northeast section approved for residential and boutique commercial. The highest point in the development with sweeping 270-degree views.',
-        model3d: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
-        cameraOrbit: '225deg 60deg 2m',
-        corners: [
-          [-116.5994, 31.4880], [-116.5978, 31.4880],
-          [-116.5978, 31.4855], [-116.5994, 31.4855]
-        ],
-        images: [
-          'https://images.unsplash.com/photo-1509233725247-49e657c54213?w=300&h=200&fit=crop',
-          'https://images.unsplash.com/photo-1504681869696-d977211a5f4c?w=300&h=200&fit=crop',
-          'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=300&h=200&fit=crop'
-        ]
-      },
-      {
-        id: 'punta-este',
-        name: 'Punta Este',
-        zoning: 'Residential',
-        basePrice: 82000,
-        lotSize: 58,
-        description: 'Eastern section with direct sightlines to the coast. Morning sun exposure and cooling Pacific breezes make this an ideal location year-round.',
-        model3d: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
-        cameraOrbit: '315deg 55deg 3.5m',
-        corners: [
-          [-116.5976, 31.4880], [-116.5963, 31.4880],
-          [-116.5963, 31.4855], [-116.5976, 31.4855]
-        ],
-        images: [
-          'https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=300&h=200&fit=crop',
-          'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=300&h=200&fit=crop',
-          'https://images.unsplash.com/photo-1437719417032-8799fd04b926?w=300&h=200&fit=crop'
-        ]
-      },
-      {
-        id: 'arroyo-sur',
-        name: 'Arroyo Sur',
+        id: 'bajada-sur',
+        name: 'Bajada Sur',
         zoning: 'Residential',
         basePrice: 68000,
         lotSize: 52,
-        description: 'Southwest section bordered by a seasonal arroyo. Natural desert landscaping with native plants. Quiet, private setting perfect for retreat-style homes.',
+        description: 'Lower western slope following the main access road. Natural desert landscaping with native vegetation. Quiet, south-facing parcels ideal for retreat-style homes with solar exposure.',
         model3d: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
         cameraOrbit: '0deg 75deg 2.8m',
         corners: [
-          [-116.6030, 31.4852], [-116.6014, 31.4852],
-          [-116.6014, 31.4827], [-116.6030, 31.4827]
+          [-116.6033, 31.4858], [-116.6018, 31.4856],
+          [-116.6003, 31.4824], [-116.6033, 31.4824]
         ],
         images: [
           'https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=300&h=200&fit=crop',
@@ -943,60 +887,79 @@
         ]
       },
       {
-        id: 'centro',
-        name: 'Centro',
-        zoning: 'Residential',
+        id: 'cruce-arroyo',
+        name: 'Cruce del Arroyo',
+        zoning: 'Mixed Use',
         basePrice: 85000,
-        lotSize: 62,
-        description: 'Heart of the development with the best value per square meter. Level terrain, walking distance to all planned amenities including the community park.',
+        lotSize: 58,
+        description: 'Central plateau between the road junction and the rocky ridge. Prime location at the crossroads of the main access road and the arroyo branch. Approved for residential and boutique commercial.',
         model3d: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
-        cameraOrbit: '90deg 80deg 2m',
+        cameraOrbit: '135deg 70deg 3m',
         corners: [
-          [-116.6012, 31.4852], [-116.5996, 31.4852],
-          [-116.5996, 31.4827], [-116.6012, 31.4827]
+          [-116.6018, 31.4870], [-116.5998, 31.4866],
+          [-116.5996, 31.4848], [-116.6012, 31.4843]
         ],
         images: [
-          'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=300&h=200&fit=crop',
-          'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=300&h=200&fit=crop',
-          'https://images.unsplash.com/photo-1484291150605-0860ed671f04?w=300&h=200&fit=crop'
+          'https://images.unsplash.com/photo-1505228395891-9a51e7e86bf6?w=300&h=200&fit=crop',
+          'https://images.unsplash.com/photo-1509233725247-49e657c54213?w=300&h=200&fit=crop',
+          'https://images.unsplash.com/photo-1468413253725-0d5181091126?w=300&h=200&fit=crop'
         ]
       },
       {
-        id: 'valle-medio',
-        name: 'Valle Medio',
+        id: 'mesa-norte',
+        name: 'Mesa Norte',
+        zoning: 'Residential',
+        basePrice: 82000,
+        lotSize: 60,
+        description: 'Expansive flat plateau east of the rocky ridge. The most buildable terrain in the development with excellent drainage and level grade throughout. Morning sun exposure and cooling Pacific breezes.',
+        model3d: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
+        cameraOrbit: '225deg 60deg 2m',
+        corners: [
+          [-116.5998, 31.4882], [-116.5963, 31.4882],
+          [-116.5963, 31.4855], [-116.5998, 31.4858]
+        ],
+        images: [
+          'https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=300&h=200&fit=crop',
+          'https://images.unsplash.com/photo-1504681869696-d977211a5f4c?w=300&h=200&fit=crop',
+          'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=300&h=200&fit=crop'
+        ]
+      },
+      {
+        id: 'valle-central',
+        name: 'Valle Central',
         zoning: 'Commercial',
         basePrice: 75000,
         lotSize: 50,
-        description: 'South-central section along the main access road. Zoned for small commercial \u2014 ideal for shops, restaurants, or eco-tourism offices serving the community.',
+        description: 'South-central valley floor between the road junction and the seasonal wash. Direct road access on two sides. Zoned for small commercial \u2014 ideal for shops, eco-tourism, or community services.',
         model3d: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
         cameraOrbit: '180deg 65deg 3m',
         corners: [
-          [-116.5994, 31.4852], [-116.5978, 31.4852],
-          [-116.5978, 31.4827], [-116.5994, 31.4827]
+          [-116.6012, 31.4843], [-116.5996, 31.4848],
+          [-116.5972, 31.4824], [-116.6003, 31.4824]
         ],
         images: [
+          'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=300&h=200&fit=crop',
           'https://images.unsplash.com/photo-1520483601560-389dff434fdf?w=300&h=200&fit=crop',
-          'https://images.unsplash.com/photo-1473186505569-9c61870c11f9?w=300&h=200&fit=crop',
           'https://images.unsplash.com/photo-1494783367193-149034c05e8f?w=300&h=200&fit=crop'
         ]
       },
       {
-        id: 'rincon-este',
-        name: 'Rinc\u00f3n Este',
+        id: 'ribera-este',
+        name: 'Ribera Este',
         zoning: 'Residential',
-        basePrice: 70000,
+        basePrice: 72000,
         lotSize: 55,
-        description: 'Southeast corner with generous lot sizes and open desert views to the south. Unobstructed southern exposure is perfect for solar and sustainable builds.',
+        description: 'Eastern bank beyond the seasonal arroyo wash. Open desert terrain with unobstructed southern views. Generous lot sizes and natural separation from the rest of the development create a private, exclusive feel.',
         model3d: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
-        cameraOrbit: '270deg 70deg 2.5m',
+        cameraOrbit: '315deg 55deg 3.5m',
         corners: [
-          [-116.5976, 31.4852], [-116.5963, 31.4852],
-          [-116.5963, 31.4827], [-116.5976, 31.4827]
+          [-116.5996, 31.4855], [-116.5963, 31.4855],
+          [-116.5963, 31.4824], [-116.5972, 31.4824]
         ],
         images: [
-          'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=300&h=200&fit=crop',
+          'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=300&h=200&fit=crop',
           'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=300&h=200&fit=crop',
-          'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&h=200&fit=crop'
+          'https://images.unsplash.com/photo-1437719417032-8799fd04b926?w=300&h=200&fit=crop'
         ]
       }
     ];
@@ -1114,6 +1077,72 @@
       map.addLayer({
         id: 'zones-outline', type: 'line', source: 'zones',
         paint: { 'line-color': 'rgba(255,255,255,0.55)', 'line-width': 1.5, 'line-dasharray': [4, 3] }
+      });
+
+      // ── TERRAIN FEATURES (roads & arroyo traced from orthomosaic) ──
+      const terrainFeatures = {
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'Feature',
+            properties: { name: 'Main Access Road', type: 'road' },
+            geometry: {
+              type: 'LineString',
+              coordinates: [
+                [-116.6033, 31.4870], [-116.6026, 31.4862], [-116.6018, 31.4856],
+                [-116.6012, 31.4843], [-116.6008, 31.4836], [-116.6003, 31.4824]
+              ]
+            }
+          },
+          {
+            type: 'Feature',
+            properties: { name: 'Branch Road', type: 'road' },
+            geometry: {
+              type: 'LineString',
+              coordinates: [
+                [-116.6012, 31.4843], [-116.6002, 31.4846], [-116.5996, 31.4848]
+              ]
+            }
+          },
+          {
+            type: 'Feature',
+            properties: { name: 'Rocky Ridge', type: 'ridge' },
+            geometry: {
+              type: 'LineString',
+              coordinates: [
+                [-116.6005, 31.4880], [-116.6002, 31.4872], [-116.5998, 31.4862],
+                [-116.5996, 31.4853], [-116.5996, 31.4848]
+              ]
+            }
+          },
+          {
+            type: 'Feature',
+            properties: { name: 'Seasonal Wash', type: 'arroyo' },
+            geometry: {
+              type: 'LineString',
+              coordinates: [
+                [-116.5996, 31.4848], [-116.5988, 31.4840], [-116.5980, 31.4834],
+                [-116.5972, 31.4828], [-116.5968, 31.4824]
+              ]
+            }
+          }
+        ]
+      };
+      map.addSource('terrain-features', { type: 'geojson', data: terrainFeatures });
+      map.addLayer({
+        id: 'terrain-roads', type: 'line', source: 'terrain-features',
+        filter: ['==', ['get', 'type'], 'road'],
+        paint: { 'line-color': 'rgba(210,180,140,0.6)', 'line-width': 2.5, 'line-dasharray': [6, 3] }
+      });
+      map.addLayer({
+        id: 'terrain-ridge', type: 'line', source: 'terrain-features',
+        filter: ['==', ['get', 'type'], 'ridge'],
+        paint: { 'line-color': 'rgba(180,140,100,0.5)', 'line-width': 2, 'line-dasharray': [2, 2] }
+      });
+      map.addLayer({
+        id: 'terrain-arroyo', type: 'line', source: 'terrain-features',
+        filter: ['==', ['get', 'type'], 'arroyo'],
+        paint: { 'line-color': 'rgba(120,160,200,0.5)', 'line-width': 3, 'line-dasharray': [4, 4] }
       });
 
       // ── ZONE LABELS ──
