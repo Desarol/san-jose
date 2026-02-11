@@ -1,0 +1,19 @@
+# Large geo/image files not needed for deployment
+*.tiff
+*.tif
+*.kmz
+*.kml
+*.aux.xml
+preview*.png
+map-reference.html
+
+# Mockup reference images
+1.jpg
+2.jpg
+3.jpg
+4.jpg
+5.jpg
+6.jpg
+
+# Supabase migration scripts (not needed at runtime)
+supabase/
